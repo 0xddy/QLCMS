@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+
+    <script src="/static/js/sae/sha1.js"></script>
+    <script src="/static/js/sae/SAEOS.js"></script>
+
+    <script src="/static/js/fileupload/jquery.ui.widget.js"></script>
+    <script src="/static/js/fileupload/jquery.fileupload.js"></script>
+
+
+    <script type="text/javascript">
+
+
+        var selectCall = function (id) {
+
+            $('input[name="groupId"]').val(id);
+            $('div[name="logo"]').fadeOut();
+        };
+
+        let _currDom;
+        var selectImg = function (index) {
+            _currDom = index;
+
+            $('#fileupload').click()
+
+
+        };
+
+        $(function () {
+            setBucket('<%= think.config("web").scs.bucket%>');
+            setAwsAccessKey('<%= think.config("web").scs.aws_access_key_id%>');
+            setAwsSecretAccessKey('<%= think.config("web").scs.aws_secret_access_key%>');
+            setUploadDir('<%= think.config("web").scs.upload_dir%>/images/');
+            //初始化计算签名
+            makeAwsPolicy();
+            let data = buildFormData();
+            $('#upload_form').fileupload({
+                url: getUrl(),
+                type: 'POST',
+                autoUpload: true,
+                formData: data,
+                progressall: function (e, data) {
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+
+                    if (_currDom == 2) {
+                        $('button[name="video"]').text('上传中' + progress + '%');
+                    } else if (_currDom == 3) {
+                        $('button[name="banner"]').text('上传中' + progress + '%');
+                    }
+                    if (progress == 100) {
+                        $('button[name="video"]').text('上传视频');
+                        $('button[name="banner"]').text('上传图片');
+                    }
+                    console.log(progress);
+                },
+                done: function (e, data) {
+
+                    console.log(getImgPath());
+                    if (_currDom == 1) {
+                        $('#img_thumb').attr('src', getImgPath());
+                        $('input[name="thumb"]').val(getImgPath());
+                    } else if (_currDom == 2) {
+                        $('input[name="videourl"]').val(getImgPath());
+                    } else if (_currDom == 3) {
+                        $('input[name="banner"]').val(getImgPath());
+                    }
+                }
+            });
+
+            $('#fileupload').on('change', function (e) {
+                //e.currentTarget.files 是一个数组，如果支持多个文件，则需要遍历
+                let name = e.currentTarget.files[0].name;
+                setFileName(name);
+            });
+
+            $('input[name="is_banner"]').change(function (e) {
+
+                alert('a')
+            });
+
+
+            layui.use(['layer', 'form', 'laydate'], function () {
+                var form = layui.form();
+                form.on('switch(playol)', function (data) {
+                    console.log(data.elem.checked); //开关是否开启，true或者false
+                    console.log(data.value); //开关value值，也可以通过data.elem.value得到
+                    isOnline = data.elem.checked;
+                    if (!data.elem.checked) {
+                        //显示扩展输入框
+                        $('#videoPath').fadeOut();
+                        $('#ext').fadeIn();
+                    } else {
+                        $('#videoPath').fadeIn();
+                        $('#ext').fadeOut();
+                    }
+
+
+                });
+
+                form.on('checkbox(is_banner)', function (data) {
+                    isBanner = data.elem.checked;
+                    if (data.elem.checked) {
+                        //显示扩展输入框
+                        $('#videoBanner').fadeIn();
+                    } else {
+                        $('#videoBanner').fadeOut();
+                    }
+                });
+
+                form.on('checkbox(is_top)', function (data) {
+                    isTop = data.elem.checked;
+                });
+
+                form.on('checkbox(is_status)', function (data) {
+                    status = data.elem.checked;
+                });
+            });
+
+            let isOnline = true;
+            let isBanner = false;
+            let isTop = false;
+            let status = true;
+            $('#submit').click(function () {
+
+                let title = $('input[name="title"]').val();
+                let description = $('textarea[name="description"]').val();
+                let groupId = $('input[name="groupId"]').val();
+                let ext = $('textarea[name="ext"]').val();
+                let videoPath = $('input[name="videourl"]').val();
+                let banner = $('input[name="banner"]').val();
+                let logo = $('#input_thumb').val();
+                let category = $('select[name="category"]').val();
+                let time = $('input[name="time"]').val();//时长
+                let addTime = transdate($('input[name="add_time"]').val());
+                let is_top = $('input[name="is_top"]').val();
+                let data = {
+                    title: title,
+                    class_id: category,
+                    introduce: description,
+                    status: status ? 1 : 0,
+                    is_group: 0,
+                    group_id: groupId == '' ? -1 : groupId,
+                    time: time,
+                    createTime: addTime,
+                    is_top: is_top ? 1 : 0,
+                    is_banner: isBanner ? 1 : 0,
+                    online_play: isOnline ? 1 : 0
+                };
+
+                if (isBanner) {
+                    data['banner'] = banner;
+                }
+                if (isOnline) {
+                    data['path'] = videoPath;
+                } else {
+                    data['extend'] = ext;
+                }
+                if (groupId != '') {
+                    //没有分组
+                    data['logo'] = logo;
+                }
+
+                if (title.trim() == '') {
+                    layer.msg('标题不能为空');
+                    return;
+                }
+
+
+                console.log(data);
+                let url = '/api/admin/video/add';
+                $.post(url, data, function (json) {
+                    if (json.errno == 0) {
+                        layer.msg('添加数据成功', {time: 1200, icon: 1});
+                    } else {
+                        layer.msg('添加数据失败', {time: 1200, icon: 2});
+                    }
+                });
+
+            });
+
+            $('#selectGroup').click(function () {
+                window.parent.selectGroup();
+            });
+
+
+            $('input[name="groupId"]').on('input propertychange',
+                    function () {
+                        var result = $(this).val();
+                        if (result.trim() == '') {
+
+                            $('div[name="logo"]').fadeIn();
+
+                        } else {
+                            $('div[name="logo"]').fadeOut();
+                        }
+                    });
+
+
+        });
+
+    </script>
+
+</head>
+<body>
+
+
+<div class="layui-layout layui-layout-main">
+    <div class="layui-form">
+        <section class="layout-inner clearfix">
+            <div class="col-main">
+                <div class="main-wrap">
+                    <ul class="layui-tab-title">
+                        <li><a href="/admin/content/video">列表</a></li>
+                        <li class="layui-this"><a href="javascript:;">新增</a></li>
+                    </ul>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">标题</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="title" placeholder="请输入标题" class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">详情介绍</label>
+                        <div class="layui-input-block">
+                            <textarea name="description" placeholder="请输入详情介绍" class="layui-textarea"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item" id="groupId">
+                        <label class="layui-form-label">分组ID</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="groupId" placeholder="分组ID（可选）" style="width: auto;float: left"
+                                   class="layui-input">
+                            <button id="selectGroup" style="float: left;margin-left: 10px" class="layui-btn">选择分组
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">在线播放</label>
+                        <div class="layui-input-block">
+                            <input type="checkbox" lay-filter="playol" name="switch" lay-text="ON|OFF" lay-skin="switch"
+                                   checked="checked">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item" id="videoPath">
+                        <label class="layui-form-label">视频地址</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="videourl" placeholder="请输入地址" style="width: 90%;float: left"
+                                   class="layui-input">
+                            <button name="video" style="float: left;margin-left: 10px" class="layui-btn"
+                                    onclick="javascript:selectImg(2)">上传视频
+                            </button>
+                        </div>
+
+
+                        <form id="video_upload_form" action="/" method="post" enctype="multipart/form-data">
+                            <input type="file" id="videoupload" name="file" hidden="hidden"/>
+                        </form>
+
+                    </div>
+
+                    <div class="layui-form-item" id="ext" hidden="hidden">
+                        <label class="layui-form-label">扩展字段</label>
+                        <div class="layui-input-block">
+                            <textarea name="ext" placeholder="请输入扩展字段" class="layui-textarea"></textarea>
+                        </div>
+                    </div>
+
+
+                    <div class="layui-form-item" id="videoBanner" hidden="hidden">
+                        <label class="layui-form-label">轮播图片</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="banner" placeholder="请输入地址" style="width: 90%;float: left"
+                                   class="layui-input">
+                            <button name="banner" style="float: left;margin-left: 10px" class="layui-btn"
+                                    onclick="javascript:selectImg(3)">上传图片
+                            </button>
+                        </div>
+
+                    </div>
+
+
+                </div>
+            </div>
+            <div class="col-sub">
+                <div class="layui-form-item">
+                    <button id="submit" class="layui-btn btn-add">保存</button>
+                    <!--<button type="reset" class="layui-btn layui-btn-primary btn-back">返回</button>-->
+                </div>
+                <blockquote class="layui-elem-quote layui-quote-nm site-block-sub clearfix">
+
+
+                    <div name="logo">
+
+                        <fieldset class="layui-elem-field layui-field-title">
+                            <legend>LOGO</legend>
+                        </fieldset>
+                        <div class="admin-site-upload">
+                            <img id="img_thumb" src="/static/img/noimg.png"
+                                 onclick="javascript:selectImg(1)"/>
+
+                            <form id="upload_form" action="/" method="post" enctype="multipart/form-data">
+                                <input type="file" id="fileupload" name="file" hidden="hidden"/>
+                            </form>
+
+                        </div>
+                        <input type="text" name="thumb" id="input_thumb" placeholder="请输入图片地址" class="layui-input"/>
+
+                    </div>
+
+
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>附属分类</legend>
+                    </fieldset>
+                    <select name="category" lay-filter="other_category">
+
+                        <% var list = JSON.parse(controller._class) %>
+                        <% for(var i=0;i
+                        <list.data.length
+                                ;i++){%>
+                            <option value="<%= list.data[i].id %>"><%=list.data[i].title%></option>
+
+                            <%}%>
+
+                    </select>
+
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>时长</legend>
+                    </fieldset>
+                    <input type="text" name="time" placeholder="请输入时长" value="00:00:00" class="layui-input">
+
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>发布时间</legend>
+                    </fieldset>
+                    <input type="text" name="add_time" id="date" class="layui-input"
+                           onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>属性</legend>
+                    </fieldset>
+
+                    <input type="checkbox" name="is_top" lay-filter="is_top" value="1" title="推荐">
+                    <input type="checkbox" name="is_banner" lay-filter="is_banner" value="1" title="轮播">
+                    <input type="checkbox" name="is_status" lay-filter="is_status" value="1" title="启用" checked="">
+                </blockquote>
+            </div>
+        </section>
+    </div>
+</div>
+
+
+</body>
+</html>

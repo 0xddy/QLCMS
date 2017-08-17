@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+
+    <style type="text/css">
+
+
+    </style>
+</head>
+
+
+<body>
+
+
+<script type="text/javascript">
+
+
+
+
+    var runTime = parseInt('<%=controller.info.runTime%>');
+
+    $(function () {
+
+        var timeSpan = $('time[id="runTime"]');
+
+        setInterval(function () {
+            runTime += 1;
+            let strTime = formatTime(runTime);
+            timeSpan.text(strTime);
+        }, 1000);
+
+    });
+
+
+
+</script>
+
+<div class="layui-layout layui-layout-main">
+    <article>
+        <div class="clearfix">
+
+            Logo
+
+            <ul class="toolbar clearfix fr">
+                <li>
+                    <a href="javascript:parent.window.updatePasswordFuc()" class="sign-out"><i class="fa fa-unlock-alt"></i>修改密码</a>
+                </li>
+                <li>
+                    <a href="/" target="_blank" class="home-admin"><i class="fa fa-home"></i>前台首页</a>
+                </li>
+                <li>
+                    <a href="javascript:parent.window.logoutFunc()" class="sign-out"><i class="fa fa-sign-out btn-logout"></i>退出登录</a>
+                </li>
+            </ul>
+        </div>
+        <blockquote class="layui-elem-quote">
+            <ul class="list-info">
+                <li><span>服务器环境 :</span><%=controller.info.type%> <%=controller.info.release%></li>
+                <li><span>平台 :</span><%=controller.info.platform%></li>
+                <li><span>指令架构 :</span><%=controller.info.arch%></li>
+                <li><span>CPU :</span><%=controller.info.cpu[0]%></li>
+                <li><span>空闲内存 :</span><%=controller.info.freemem%></li>
+                <li><span>运行时间 :</span>
+                    <time id="runTime">0天 0小时 0分 0秒</time>
+                </li>
+                <li><span>运行环境 :</span><% if(controller.info.version.node!=undefined){ %>Node.js <%=
+                    controller.info.version.node %><%}else{%>未知<%}%>
+                </li>
+                <li><span>NPM :</span><% if(controller.info.version.npm!=undefined){ %><%= controller.info.version.npm
+                    %><%}else{%>未知<%}%>
+                </li>
+
+                <li> <span>MYSQL :</span> <%=controller.info.mysql_v%> </li>
+
+            </ul>
+        </blockquote>
+
+        <blockquote class="layui-elem-quote" style="border-left-color: #00d4bd">
+
+            <ul class="list-info">
+                <li><span>App Env :</span><%=controller.info.appConf.env %></li>
+                <li><span>Thinkjs -v :</span><%=controller.info.appConf.tkv %></li>
+                <li><span>WebSocket :</span><%=controller.info.appConf.websocketStatus %></li>
+                <li><span>Cluster :</span><%=controller.info.appConf.clusterStatus %></li>
+                <li><span>Port :</span><%=controller.info.appConf.port %></li>
+            </ul>
+
+        </blockquote>
+
+    </article>
+    <fieldset class="layui-elem-field">
+        <legend>开发团队</legend>
+        <div class="layui-field-box">
+            <ul class="list-info">
+                <li><span>版权所有 :</span>QLCMS</li>
+                <li><span>基于程序 :</span>Node.js and ThinkJs</li>
+                <li><span>基于UI :</span>layui - 经典模块化前端框架</li>
+                <li><span>联系邮箱 :</span>1121744186@qq.com</li>
+                <li><span>程序版本 :</span>V0.1</li>
+            </ul>
+        </div>
+    </fieldset>
+</div>
+
+</body>
+</html>

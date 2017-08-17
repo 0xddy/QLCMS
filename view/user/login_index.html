@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+    <title>后台登录</title>
+
+    <style type="text/css">
+
+        body {
+            background-color: #2bb0d4;
+        }
+    </style>
+
+</head>
+<body>
+
+<div id="login" class="clearfix">
+    <div class="login-right layui-form">
+        <h1>QLCMS</h1>
+
+        <ul>
+            <li><input type="text" name="email" placeholder="管理邮箱" class="layui-input"></li>
+            <li><input type="password" name="password" placeholder="管理密码" class="layui-input"></li>
+            <li>
+                <button class="layui-btn btn-login"><i name="ic_login" class="layui-icon layui-anim layui-anim-rotate layui-anim-loop" style="display:none;margin-right: 6px">&#xe63d;</i>登录</button>
+                <button class="layui-btn layui-btn-warm">忘记密码</button>
+            </li>
+        </ul>
+
+    </div>
+    <div class="login-left"></div>
+</div>
+
+<script type="text/javascript">
+
+
+
+
+    $(function () {
+
+        //登陆按钮
+        $('button[class="layui-btn btn-login"]').click(function (e) {
+
+            let email = $('input[name="email"]').val();
+            let password = $('input[name="password"]').val();
+
+            if (email == '' || password == '') {
+                showMsg('请填写邮箱或密码');
+
+                return;
+            }
+
+            $('i[name="ic_login"]').css('display', 'inline-block');
+
+            loginAjax(email, password, function (json) {
+
+                if (json.errno > 0) {
+                    showMsg(json.errmsg)
+                } else {
+                    //登陆成功
+                    setCookie('token', json.data.token);
+                    layer.msg('登录成功，正在跳转中...');
+                    setTimeout(function(){
+                        location.href = '/admin';
+                    },2000);
+                }
+
+                $('i[name="ic_login"]').css('display', 'none');
+
+            });
+
+        });
+        //忘记密码按钮
+        $('button[class="layui-btn layui-btn-warm"]').click(function (e) {
+            layer.open({
+                type: 1,
+                area: ['400px', '360px'],
+                shadeClose: true, //点击遮罩关闭,
+                title: '密码重置',
+                content: '<div style="width: auto;height: auto;padding: 30px">' +
+                '<ul class="ul2">' +
+                '<li><input type="text" name="email2" placeholder="输入您的邮箱" class="layui-input"></li>' +
+                '<li><input type="text" name="vf" placeholder="验证码" class="layui-input" style="float: left;width: auto">' +
+                '<button onclick="javascript:getEmailCodeFunc(this)" name="btn_vf" class="layui-btn layui-btn-danger" style="margin-left: 16px;float: left">' +
+                '<i name="ic_vf" class="layui-icon layui-anim layui-anim-rotate layui-anim-loop" style="display:none;margin-right: 10px">&#xe63d;</i>验证码' +
+                '</button>' +
+                '</li>' +
+                '<li><input type="password" name="newpwd" placeholder="新密码" class="layui-input"></li>' +
+                '<li><input type="password" name="newpwd2" placeholder="重复新密码" class="layui-input"></li> ' +
+                '<li><button onclick="javascript:updatePwdFunc(this)" type="button" class="layui-btn layui-btn-big layui-btn-normal" style="width: 100%">' +
+                '<i name="ic_update" class="layui-icon layui-anim layui-anim-rotate layui-anim-loop" style="display:none;margin-right: 10px">&#xe63d;</i>修改</button> </li>' +
+                '</ul>' +
+                '</div>',
+                end: function () {
+                    //重置计数器
+                    countdown = 0;
+
+                }
+            });
+            countdown = 60;
+
+        });
+
+    })
+
+
+</script>
+</body>
+</html>

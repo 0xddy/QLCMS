@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+
+
+</head>
+<body>
+
+
+<div class="layui-layout layui-layout-main">
+    <div class="layui-form">
+        <ul class="layui-tab-title">
+            <li class="layui-this"><a href="javascript:;">列表</a></li>
+            <li><a href="/admin/class/add">新增</a></li>
+        </ul>
+        <!--<div class="clearfix">-->
+        <!--<form method="get" name="search" id="search">-->
+        <!--<div class="layui-input-inline">-->
+        <!--<input type="text" name="keyword" id="keyword" lay-verify="keyword" autocomplete="off" value=""-->
+        <!--placeholder="请输入关键词" class="layui-input">-->
+        <!--</div>-->
+        <!---->
+        <!--<button class="layui-btn layui-btn-danger btn-search">搜索</button>-->
+
+        <!--</form>-->
+        <!--</div>-->
+
+        <table class="layui-table">
+            <colgroup>
+                <col width="50">
+                <col width="50">
+                <col>
+                <col width="60">
+                <col width="180">
+
+                <col width="150">
+            </colgroup>
+            <thead>
+            <tr>
+                <th>
+                </th>
+                <th>ID</th>
+                <th>标题</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+
+            </thead>
+
+            <tbody id="list">
+            <!-- 数据列表 -->
+            </tbody>
+        </table>
+        <div class="clearfix">
+            <div class="fl">
+
+                <button class="layui-btn btn-selAll">全选</button>
+                <button class="layui-btn btn-delAll">删除选中</button>
+            </div>
+            <div class="fr">
+
+                <div id="page"></div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    function checkedClassFunc(obj, all) {
+        let div;
+        if (!all) {
+            let th = $('tr[name="' + obj + '"] th')[0];
+            div = $(th).find('div');
+        } else {
+            div = $(obj);
+        }
+        let status = div.attr('class');
+        if (status == 'layui-unselect layui-form-checkbox layui-form-checked') {
+
+            div.attr('class', 'layui-unselect layui-form-checkbox');
+            if (all) {
+
+                $('div[class="layui-unselect layui-form-checkbox layui-form-checked"]').attr('class', 'layui-unselect layui-form-checkbox');
+            }
+
+        } else {
+
+            div.attr('class', 'layui-unselect layui-form-checkbox layui-form-checked');
+            if (all) {
+
+                $('div[class="layui-unselect layui-form-checkbox"]').attr('class', 'layui-unselect layui-form-checkbox layui-form-checked');
+            }
+        }
+
+    }
+
+    function addNode($dom, obj) {
+
+        let show = '✓';
+        if (obj['show'] != '1') {
+            show = '✗';
+        }
+
+        //layui-form-checked
+        let doc = '<tr name="' + obj['id'] + '">' +
+                '<th>' +
+                '<input type="checkbox" name="" lay-skin="primary">' +
+                '<div class="layui-unselect layui-form-checkbox" lay-skin="primary" onclick="javascript:checkedClassFunc(' + obj['id'] + ',false)">' +
+                '<i class="layui-icon"></i>' +
+                '</div>' +
+                '</th>' +
+                '<th>' + obj['id'] + '</th>' +
+                '<th>' + obj['title'] + '</th>' +
+                '<th style="text-align: center">' + show + '</th>' +
+                '<th>' + new Date(obj['createAt']).Format('yyyy-MM-dd hh:mm:ss') + '</th>' +
+                '<th><a href="/admin/class/update?id=' + obj['id'] + '&title=' + obj['title'] + '&status=' + obj['show'] + '" class="layui-btn layui-btn-mini">编辑</a>' +
+                '<a href="javascript:delClass([' + obj['id'] + ']);" class="layui-btn layui-btn-danger layui-btn-mini btn-del">删除</a>' +
+                '</th></tr>';
+
+        $($dom).append(doc);
+    }
+
+    let isFirstInit = true;
+    function getData(page) {
+        if (page <= 0) {
+            page = 1;
+        }
+        let url = '/api/admin/class/limit';
+        let data = {
+            page: page,
+            size: 10
+        };
+
+        let loadId = layer.load(1, {
+            shade: [0.1, '#fff'] //0.1透明度的白色背景
+        });
+
+        $.post(url, data, function (json) {
+
+            layer.close(loadId);
+
+            $('#list').find('tr').remove();
+
+            if (json.errno == 0) {
+                let dataArr = json.data.data;
+                for (let i = 0; i < dataArr.length; i++) {
+                    addNode($('#list'), dataArr[i]);
+                }
+
+                if (isFirstInit) {
+                    var laypage = layui.laypage;
+                    laypage({
+                        cont: 'page'
+                        , pages: json.data.totalPages
+                        , first: false
+                        , last: false
+                        , skin: '#2bb0d4'
+                        , jump: function (obj) {
+                            if (isFirstInit) {
+                                isFirstInit = false;
+                                return;
+                            }
+                            getData(obj.curr)
+                        }
+                    });
+                }
+
+
+            }
+        });
+
+    }
+
+    function delClassCall(json){
+        if (json.errno == 0) {
+            location.reload();
+        } else {
+            layer.msg(json.errmsg, {time: 1200, icon: 2});
+        }
+    }
+
+    //删除
+    function delClass(ids) {
+        window.parent.delClassCall(ids);
+
+    }
+
+    function readyRun() {
+        getData(1);
+
+    }
+    layui.use(['laypage', 'layer'], function () {
+
+        readyRun();
+
+    });
+
+    $(function () {
+        $('button[class="layui-btn btn-delAll"]').click(function () {
+            let ids = [];
+            $('#list').find('div[class="layui-unselect layui-form-checkbox layui-form-checked"]').each(function (i, n) {
+                let id = $(n).parent().parent().attr('name');
+                ids[i] = id;
+
+            });
+            delClass(ids);
+
+
+        });
+
+        let selectedAll = false;
+        //全选
+        $('button[class="layui-btn btn-selAll"]').click(function () {
+            if (!selectedAll) {
+                $('div[class="layui-unselect layui-form-checkbox"]').attr('class', 'layui-unselect layui-form-checkbox layui-form-checked');
+            } else {
+                $('div[class="layui-unselect layui-form-checkbox layui-form-checked"]').attr('class', 'layui-unselect layui-form-checkbox');
+            }
+            selectedAll = !selectedAll;
+            if (selectedAll) {
+                $(this).text('反选')
+            } else {
+                $(this).text('全选')
+            }
+
+        });
+
+
+    });
+
+
+</script>
+
+</body>
+</html>

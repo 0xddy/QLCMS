@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+
+    <style>
+
+        th img {
+            width: 60px;
+            height: 60px;
+        }
+
+    </style>
+
+</head>
+<body>
+
+
+<div class="layui-layout layui-layout-main">
+    <div class="layui-form">
+
+        <div class="clearfix">
+
+            <div class="layui-input-inline">
+                <input type="text" name="keyword" id="keyword" lay-verify="keyword" autocomplete="off" value=""
+                       placeholder="请输入关键词" class="layui-input">
+            </div>
+
+            <button id="btn_search" class="layui-btn layui-btn-danger btn-search">搜索</button>
+
+        </div>
+
+        <table class="layui-table">
+            <colgroup>
+
+                <col width="50">
+                <col width="90">
+                <col>
+                <col width="80">
+                <col width="60">
+                <col width="180">
+                <col width="80">
+            </colgroup>
+            <thead>
+            <tr>
+
+                <th>ID</th>
+                <th>LOGO</th>
+                <th>标题</th>
+                <th>分类</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+
+            </thead>
+
+            <tbody id="list">
+            <!-- 数据列表 -->
+            </tbody>
+        </table>
+        <div class="clearfix">
+
+            <div class="fr">
+
+                <div id="page"></div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    var data = {
+        is_group: 1,
+        page: 1,
+        size: 6
+    };
+
+    let isFirstInit = true;
+    var initData = function (page) {
+        data['page'] = page;
+        let url = '/api/list';
+        let loadId = layer.load(1, {
+            shade: [0.1, '#fff'] //0.1透明度的白色背景
+        });
+        $.post(url, data, function (json) {
+            layer.close(loadId);
+            if (json.errno == 0) {
+                //获取成功
+                $('#list').find('tr').remove();
+
+                let dataArr = json.data.data;
+                for (let i = 0; i < dataArr.length; i++) {
+                    addNode($('#list'), dataArr[i]);
+                }
+
+                if (isFirstInit) {
+                    var laypage = layui.laypage;
+                    laypage({
+                        cont: 'page'
+                        , pages: json.data.totalPages
+                        , first: false
+                        , last: false
+                        , skin: '#2bb0d4'
+                        , jump: function (obj) {
+                            if (isFirstInit) {
+                                isFirstInit = false;
+                                return;
+                            }
+                            initData(obj.curr)
+                        }
+                    });
+                }
+
+
+            } else {
+                layer.msg(json.errmsg, {time: 1000, icon: 2});
+            }
+        });
+    };
+
+
+    var addNode = function ($dom, obj) {
+
+        let show = '✓';
+        if (obj['status'] != '1') {
+            show = '✗';
+        }
+        let doc = '<tr name="' + obj['id'] + '">' +
+                '<th>' + obj['id'] + '</th>' +
+                '<th ><img src="' + obj['logo'] + '"/> </th>' +
+                '<th>' + obj['title'] + '</th>' +
+                '<th>' + obj['class']['title'] + '</th>' +
+                '<th style="text-align: center">' + show + '</th>' +
+                '<th>' + new Date(obj['createAt']).Format('yyyy-MM-dd hh:mm:ss') + '</th>' +
+                '<th>' +
+                '<a href="javascript:window.parent.selectGroupCall(' + obj['id'] + ')" class="layui-btn layui-btn-mini">选择</a>' +
+                '' +
+                '</th></tr>';
+
+        $($dom).append(doc);
+
+    };
+
+    $(function () {
+
+        $('#btn_search').click(function () {
+                    let keyword = $('#keyword').val();
+                    data['like'] = '%' + keyword + '%';
+                    isFirstInit = true;
+                    initData(1);
+                }
+        );
+
+        layui.use(['layer', 'laypage', 'form'], function () {
+            initData(1);
+        });
+
+
+    })
+
+
+</script>
+
+</body>
+</html>

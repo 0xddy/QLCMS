@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+
+    <script type="text/javascript">
+
+        $(function () {
+
+            let id = '<%= controller.id%>';
+            let status = '<%= controller.status%>';
+            let radio1 = $('input[name="sex"]')[0];
+            let radio2 = $('input[name="sex"]')[1];
+            if (status == '1') {
+                $(radio1).attr('checked', 'true');
+            } else {
+                $(radio2).attr('checked', 'true');
+            }
+            $('button[class="layui-btn btn-saveAll"]').click(function () {
+                let show = $('input[name="sex"]:checked').val();
+                let title = $('input[name="title"]').val();
+                updateClassAjax({id: id, title: title, show: show}, function (json) {
+                    if (json.errno == 0) {
+                        layer.msg('保存数据成功', {time: 1200, icon:1});
+                    }else{
+                        layer.msg('保存数据失败', {time: 1200, icon:2});
+                    }
+                });
+
+            });
+
+        })
+
+    </script>
+
+</head>
+<body>
+
+
+<div class="layui-layout layui-layout-main">
+    <div class="layui-form">
+        <ul class="layui-tab-title">
+            <li><a href="/admin/class">列表</a></li>
+            <li class="layui-this"><a
+                    href="/admin/class/update?id=<%= controller.id%>&title=<%= controller.title%>&status=<%= controller.status%>">修改</a>
+            </li>
+        </ul>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">标题</label>
+            <div class="layui-input-block">
+                <input type="text" name="title" value="<%= controller.title%>" placeholder="请输入标题" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <div class="layui-form layui-form-pane">
+                    <input type="radio" name="sex" value="1" title="显示">
+                    <input type="radio" name="sex" value="0" title="隐藏">
+                </div>
+
+            </div>
+        </div>
+        <!--<div class="layui-form-item">-->
+        <!--<label class="layui-form-label">内容</label>-->
+        <!--<div class="layui-input-block">-->
+        <!--编辑器-->
+        <!--</div>-->
+        <!--</div>-->
+
+        <div class="layui-form-item">
+            <label class="layui-form-label"></label>
+            <button class="layui-btn btn-saveAll">保存数据</button>
+        </div>
+
+
+        <!--<div class="clearfix">-->
+        <!--<div class="fl">-->
+
+        <!--<button class="layui-btn btn-delAll">删除选中</button>-->
+        <!--</div>-->
+        <!--<div class="fr">-->
+
+        <!--<div id="page"></div>-->
+
+        <!--</div>-->
+        <!--</div>-->
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>后台管理中心</title>
+
+    <%include ../inc/header.html%>
+
+</head>
+<body>
+
+
+<div class="layui-layout-admin">
+
+    <nav class="layui-side layui-bg-black">
+        <ul class="layui-nav layui-nav-tree" id="admin-nav">
+
+            <li class="layui-nav-item layui-this">
+                <a href="/admin/index/welcome" data-id="1" class="btn-nav" target="main">
+                    <span><i class="fa fa-dashboard"></i></span>主页 </a>
+            </li>
+
+            <li class="layui-nav-item">
+                <a href="/admin/content/video" data-id="1" class="btn-nav" target="main">
+                    <span><i class="fa fa-dashboard"></i></span>内容管理 </a>
+            </li>
+
+            <li class="layui-nav-item">
+                <a href="/admin/class" data-id="1" class="btn-nav" target="main">
+                    <span><i class="fa fa-dashboard"></i></span>栏目管理 </a>
+            </li>
+
+            <!--&lt;!&ndash; layui-this &ndash;&gt;-->
+            <!--<li class="layui-nav-item">-->
+            <!--<a href="http://ename.com" data-id="2" class="btn-nav" target="main">-->
+            <!--<span><i class="fa fa-envelope"></i></span>留言管理 </a>-->
+            <!--</li>-->
+            <!--<li class="layui-nav-item ">-->
+            <!--<a href="http://qq.com" data-id="3" class="btn-nav" target="main">-->
+            <!--<span><i class="fa fa-database"></i></span>订单管理 </a>-->
+            <!--</li>-->
+            <!--<li class="layui-nav-item ">-->
+            <!--<a href="http://sina.com" data-id="4" class="btn-nav" target="main">-->
+            <!--<span><i class="fa fa-users"></i></span>会员管理 </a>-->
+            <!--</li>-->
+
+        </ul>
+    </nav>
+    <menu class="layui-menu" id="admin-menu">
+        <ul class="admin-menu-main" id="admin-menu-main">
+            <!--<li class="layui-nav-item top parent">-->
+            <!--&lt;!&ndash; class="active"&ndash;&gt;-->
+            <!--<a href="javascript:;" target="main">后台主页</a>-->
+            <!--</li>-->
+
+            <!--<li class="layui-nav-item top">-->
+            <!--<a href="/page/index/category_id/2.html" target="main">分组列表</a>-->
+            <!--</li>-->
+
+        </ul>
+    </menu>
+
+
+    <div class="layui-body" id="admin-body">
+        <iframe name="main" src="/admin/index/welcome" width="100%" height="100%" frameborder="no"></iframe>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+
+
+    $(function () {
+
+        bindViews($('ul[class="layui-nav layui-nav-tree"] li:eq(0)'), 0);
+
+        $('ul[class="layui-nav layui-nav-tree"] li').each(function (i, n) {
+
+            $(n).click(function () {
+                //添加选中class
+                bindViews(this, i);
+
+            })
+
+        });
+
+    });
+
+
+    function selectGroup() {
+
+        layer.open({
+            type: 2,
+            title: '选择分组',
+            shadeClose: true,
+            shade: false,
+            area: ['70%', '90%'],
+            content: '/admin/content/select' //iframe的url
+        });
+
+    }
+
+    function selectGroupCall(id) {
+        $('iframe[name="main"]')[0].contentWindow.selectCall(id);
+        layer.closeAll();
+    }
+
+
+    function delClassCall(ids) {
+
+        layer.confirm('删除栏目可能会造成比较严重的后果，您确定删除？', {
+            btn: ['删除', '取消'] //按钮
+            , shade: false
+        }, function () {
+            layer.closeAll();
+            let postStr = '';
+            for (let i = 0; i < ids.length; i++) {
+                postStr = postStr + ids[i] + '%';
+            }
+            let url = '/api/admin/class/delete';
+            $.post(url, {ids: postStr}, function (json) {
+                $('iframe[name="main"]')[0].contentWindow.delClassCall(json);
+
+            });
+        }, function () {
+
+        });
+    }
+
+    function delVideoCall(ids){
+
+        layer.confirm('删除后无法恢复，您确定删除？', {
+            btn: ['删除', '取消'] //按钮
+            , shade: false
+        }, function () {
+            layer.closeAll();
+            let postStr = '';
+            for (let i = 0; i < ids.length; i++) {
+                postStr = postStr + ids[i] + '%';
+            }
+            let url = '/api/admin/video/delete';
+            $.post(url, {ids: postStr}, function (json) {
+                $('iframe[name="main"]')[0].contentWindow.delVideoCall(json);
+
+            });
+        }, function () {
+
+        });
+
+    }
+
+
+</script>
+
+</body>
+</html>

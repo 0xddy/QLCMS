@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <%include ../inc/header.html%>
+
+    <script src="/static/js/sae/sha1.js"></script>
+    <script src="/static/js/sae/SAEOS.js"></script>
+
+    <script src="/static/js/fileupload/jquery.ui.widget.js"></script>
+    <script src="/static/js/fileupload/jquery.fileupload.js"></script>
+
+    <script type="text/javascript">
+        let isFirstInit = true;
+        var data = {
+            page: 1,
+            size: 16,
+            order: 3,
+            is_group: 0
+        };
+
+        var addNode = function ($dom, obj) {
+            let show = '✓';
+            if (obj['status'] != '1') {
+                show = '✗';
+            }
+            let createTime = parseInt(obj['createTime']);
+            //所属父类 {"id":1,"title":"美剧","show":0}
+            let _class = obj['class'];
+            let classTitle = _class == undefined ? "" : _class['title'];
+
+            var doc = '<tr name="' + obj['id'] + '">' +
+                    '<th>' +
+                    '<input type="checkbox" name="" lay-skin="primary">' +
+                    '<div class="layui-unselect layui-form-checkbox" lay-skin="primary" onclick="javascript:checkedClassFunc(' + obj['id'] + ',false)">' +
+                    '<i class="layui-icon"></i>' +
+                    '</div>' +
+                    '</th>' +
+                    "<th>" + obj.id + "</th>" +
+                    "<th>" + obj.title + "</th>" +
+                    "<th>" + classTitle + "</th>" +
+                    "<th>" + show + "</th>" +
+                    "<th>" + new Date(createTime).Format('yyyy-MM-dd hh:mm:ss') + "</th>" +
+                    "<th>" +
+                    '<a href="javascript:delVideo([' + obj['id'] + ']);" class="layui-btn layui-btn-danger layui-btn-mini btn-del">删除</a>' +
+                    '<a href="/admin/content/update?vid=' + obj['id'] + '" class="layui-btn layui-btn-normal layui-btn-mini btn-del">编辑</a>' +
+                    "</th></tr>";
+
+            $($dom).append(doc);
+        };
+
+        function delVideoCall(json) {
+
+            if (json.errno == 0) {
+
+                initData(data.page == undefined ? 1 : data.page);
+
+            } else {
+                layer.msg(json.errmsg, {time: 1200, icon: 2});
+            }
+        }
+
+        //删除
+        function delVideo(ids) {
+            window.parent.delVideoCall(ids);
+        }
+        var checkedClassFunc = function (obj, all) {
+            let div;
+            if (!all) {
+                let th = $('tr[name="' + obj + '"] th')[0];
+                div = $(th).find('div');
+            } else {
+                div = $(obj);
+            }
+            let status = div.attr('class');
+            if (status == 'layui-unselect layui-form-checkbox layui-form-checked') {
+
+                div.attr('class', 'layui-unselect layui-form-checkbox');
+                if (all) {
+
+                    $('div[class="layui-unselect layui-form-checkbox layui-form-checked"]').attr('class', 'layui-unselect layui-form-checkbox');
+                }
+
+            } else {
+
+                div.attr('class', 'layui-unselect layui-form-checkbox layui-form-checked');
+                if (all) {
+
+                    $('div[class="layui-unselect layui-form-checkbox"]').attr('class', 'layui-unselect layui-form-checkbox layui-form-checked');
+                }
+            }
+
+        }
+
+        var initData = function (page) {
+            data.page = page;
+
+            let url = '/api/admin/video/list';
+
+            let loadId = layer.load(1, {
+                shade: [0.1, '#fff'] //0.1透明度的白色背景
+            });
+
+            $.post(url, data, function (json) {
+                layer.close(loadId);
+                let dataArr = json.data.data;
+                console.log(json);
+                $('#list').find('tr').remove();
+                for (let i = 0; i < dataArr.length; i++) {
+                    addNode($('#list'), dataArr[i]);
+                }
+
+                if (isFirstInit) {
+                    var laypage = layui.laypage;
+                    laypage({
+                        cont: 'page'
+                        , pages: json.data.totalPages
+                        , first: false
+                        , last: false
+                        , skin: '#2bb0d4'
+                        , jump: function (obj) {
+                            if (isFirstInit) {
+                                isFirstInit = false;
+                                return;
+                            }
+                            initData(obj.curr)
+                        }
+                    });
+                }
+            });
+        };
+
+        $(function () {
+
+            layui.use(['layer', 'laypage'], function () {
+                initData(1);
+            });
+
+
+            $('#btn_search').click(function () {
+                let keyword = $('input[name="keyword"]').val();
+                data['keyword'] = '%' + keyword + '%';
+                isFirstInit = true;
+                initData(1)
+            });
+
+            $('button[class="layui-btn btn-delAll"]').click(function () {
+                let ids = [];
+                $('#list').find('div[class="layui-unselect layui-form-checkbox layui-form-checked"]').each(function (i, n) {
+                    let id = $(n).parent().parent().attr('name');
+                    ids[i] = id;
+
+                });
+                delVideo(ids);
+
+            });
+
+            let selectedAll = false;
+            //全选
+            $('button[class="layui-btn btn-selAll"]').click(function () {
+                if (!selectedAll) {
+                    $('div[class="layui-unselect layui-form-checkbox"]').attr('class', 'layui-unselect layui-form-checkbox layui-form-checked');
+                } else {
+                    $('div[class="layui-unselect layui-form-checkbox layui-form-checked"]').attr('class', 'layui-unselect layui-form-checkbox');
+                }
+                selectedAll = !selectedAll;
+                if (selectedAll) {
+                    $(this).text('反选')
+                } else {
+                    $(this).text('全选')
+                }
+
+            });
+
+        })
+    </script>
+
+</head>
+<body>
+
+
+<div class="layui-layout layui-layout-main">
+    <div class="layui-form">
+        <ul class="layui-tab-title">
+            <li class="layui-this"><a href="javascript:;">列表</a></li>
+            <li><a href="/admin/content/add">新增</a></li>
+        </ul>
+        <div class="clearfix">
+
+            <div class="layui-input-inline">
+                <input type="text" name="keyword" id="keyword" lay-verify="keyword" autocomplete="off" value=""
+                       placeholder="请输入关键词" class="layui-input">
+            </div>
+            <button id="btn_search" class="layui-btn layui-btn-danger btn-search">搜索</button>
+
+        </div>
+
+        <table class="layui-table">
+            <colgroup>
+                <col width="50">
+                <col width="50">
+                <col>
+                <col width="120">
+                <col width="80">
+                <col width="180">
+
+                <col width="200">
+            </colgroup>
+            <thead>
+            <tr>
+                <th></th>
+                <th>ID</th>
+                <th>标题</th>
+                <th>分类</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+
+            </thead>
+
+            <tbody id="list">
+            <!-- 数据列表 -->
+            </tbody>
+        </table>
+        <div class="clearfix">
+            <div class="fl">
+
+                <button class="layui-btn btn-selAll">全选</button>
+                <button class="layui-btn btn-delAll">删除选中</button>
+            </div>
+            <div class="fr">
+
+                <div id="page"></div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+</body>
+</html>
