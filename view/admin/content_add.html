@@ -147,7 +147,8 @@
                     createTime: addTime,
                     is_top: is_top ? 1 : 0,
                     is_banner: isBanner ? 1 : 0,
-                    online_play: isOnline ? 1 : 0
+                    online_play: isOnline ? 1 : 0,
+                    logo: logo
                 };
 
                 if (isBanner) {
@@ -345,9 +346,9 @@
                         <legend>属性</legend>
                     </fieldset>
 
-                    <input type="checkbox" name="is_top" lay-filter="is_top" value="1" title="推荐">
-                    <input type="checkbox" name="is_banner" lay-filter="is_banner" value="1" title="轮播">
-                    <input type="checkbox" name="is_status" lay-filter="is_status" value="1" title="启用" checked="">
+                    <input type="checkbox" name="is_top" lay-filter="is_top" title="推荐">
+                    <input type="checkbox" name="is_banner" lay-filter="is_banner" title="轮播">
+                    <input type="checkbox" name="is_status" lay-filter="is_status" title="启用" checked="">
                 </blockquote>
             </div>
         </section>

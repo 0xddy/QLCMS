@@ -33,6 +33,8 @@ export default class extends Base {
 
     async updateAction(){
 
+        this.vid = this.get('vid');
+
         let model = this.model('class.remote');
         let classModel = model.getClassModel();
         let data = await classModel.showAllClassAndHide({});

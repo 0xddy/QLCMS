@@ -29,6 +29,13 @@
 
         };
 
+        var initCreateDate = function (elem) {
+
+            layui.laydate({elem: elem, istime: true, format: 'YYYY-MM-DD hh:mm:ss'});
+
+
+        };
+
         $(function () {
             setBucket('<%= think.config("web").scs.bucket%>');
             setAwsAccessKey('<%= think.config("web").scs.aws_access_key_id%>');
@@ -78,7 +85,6 @@
 
             $('input[name="is_banner"]').change(function (e) {
 
-                alert('a')
             });
 
 
@@ -125,6 +131,7 @@
             let status = true;
             $('#submit').click(function () {
 
+                let id = '<%=controller.vid%>';
                 let title = $('input[name="title"]').val();
                 let description = $('textarea[name="description"]').val();
                 let groupId = $('input[name="groupId"]').val();
@@ -137,6 +144,7 @@
                 let addTime = transdate($('input[name="add_time"]').val());
                 let is_top = $('input[name="is_top"]').val();
                 let data = {
+                    id: id,
                     title: title,
                     class_id: category,
                     introduce: description,
@@ -147,7 +155,8 @@
                     createTime: addTime,
                     is_top: is_top ? 1 : 0,
                     is_banner: isBanner ? 1 : 0,
-                    online_play: isOnline ? 1 : 0
+                    online_play: isOnline ? 1 : 0,
+                    logo:logo
                 };
 
                 if (isBanner) {
@@ -170,12 +179,12 @@
 
 
                 console.log(data);
-                let url = '/api/admin/video/add';
+                let url = '/api/admin/video/update';
                 $.post(url, data, function (json) {
                     if (json.errno == 0) {
-                        layer.msg('添加数据成功', {time: 1200, icon: 1});
+                        layer.msg('更新数据成功', {time: 1200, icon: 1});
                     } else {
-                        layer.msg('添加数据失败', {time: 1200, icon: 2});
+                        layer.msg('更新数据失败', {time: 1200, icon: 2});
                     }
                 });
 
@@ -186,18 +195,62 @@
             });
 
 
-            $('input[name="groupId"]').on('input propertychange',
-                    function () {
-                        var result = $(this).val();
-                        if (result.trim() == '') {
+            $('input[name="groupId"]').on('input propertychange', function () {
+                var result = $(this).val();
+                if (result.trim() == '') {
 
-                            $('div[name="logo"]').fadeIn();
+                    $('div[name="logo"]').fadeIn();
 
-                        } else {
-                            $('div[name="logo"]').fadeOut();
-                        }
-                    });
+                } else {
+                    $('div[name="logo"]').fadeOut();
+                }
+            });
 
+
+            //初始化数据
+            let url = '/api/admin/video/list';
+
+            $.post(url, {vid: '<%=controller.vid%>'}, function (json) {
+                let data = json.data.data[0];
+                console.log(data)
+                $('textarea[name="description"]').val(data.introduce);
+                if (data.group_id == -1) {
+
+                } else {
+                    $('input[name="groupId"]').val(data.group_id);
+                    $('div[name="logo"]').hide();
+                }
+                if (data.online_play != 1) {
+                    $('input[name="switch"]').attr("checked", false);
+                    $('#videoPath').hide();
+                    $('#ext').show();
+                }
+                //extend
+                $('input[name="title"]').val(data.title);
+                $('input[name="videourl"]').val(data.path);
+                $('textarea[name="ext"]').val(data.extend);
+                if (data.logo != '') {
+                    $('#img_thumb').attr('src', data.logo);
+                    $('input[name="thumb"]').val(data.logo);
+                }
+
+                $('input[name="time"]').val(data.time);
+                if (data.is_top == 1)
+                    $('input[name="is_top"]').attr('checked', true);
+                else
+                    $('input[name="is_top"]').attr('checked', false);
+                if (data.is_banner)
+                    $('input[name="is_banner"]').attr('checked', true);
+                else
+                    $('input[name="is_banner"]').attr('checked', false);
+                if (data.status == 1)
+                    $('input[name="is_status"]').attr('checked', true);
+                else
+                    $('input[name="is_status"]').attr('checked', false);
+                let createTime = data.createTime;
+                $('input[name="add_time"]').val(new Date(createTime).Format('yyyy-MM-dd hh:mm:ss'));
+
+            });
 
         });
 
@@ -340,15 +393,15 @@
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>发布时间</legend>
                     </fieldset>
-                    <input type="text" name="add_time" id="date" class="layui-input"
-                           onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+                    <input type="text" name="add_time" id="date" class="layui-input" value=""
+                           onclick="initCreateDate(this)">
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>属性</legend>
                     </fieldset>
 
-                    <input type="checkbox" name="is_top" lay-filter="is_top" value="1" title="推荐">
-                    <input type="checkbox" name="is_banner" lay-filter="is_banner" value="1" title="轮播">
-                    <input type="checkbox" name="is_status" lay-filter="is_status" value="1" title="启用" checked="">
+                    <input type="checkbox" name="is_top" lay-filter="is_top" title="推荐">
+                    <input type="checkbox" name="is_banner" lay-filter="is_banner" title="轮播">
+                    <input type="checkbox" name="is_status" lay-filter="is_status" title="启用" checked="">
                 </blockquote>
             </div>
         </section>

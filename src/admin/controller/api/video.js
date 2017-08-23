@@ -57,12 +57,10 @@ export default class extends Base {
     }
 
     async updateAction() {
-
         let video = this.post();
         let model = this.model('video.remote');
         let affectedRows = await model.updateVideo(video);
         return this.success(affectedRows);
-
     }
 
 
@@ -95,7 +93,7 @@ export default class extends Base {
     }
 
     async listAction() {
-
+        let vid = this.post('vid');
         let class_id = this.post('class_id');//分类id
         let is_group = this.post('is_group');//分组or内容
         let orderType = Number(this.post('order'));//排序规则
@@ -104,7 +102,6 @@ export default class extends Base {
         let keyword = this.post('keyword');
         let page = this.post('page');
         let size = this.post('size');
-
         let where = {};
         let order = {};
         //指定获取某个分类下的内容
@@ -113,6 +110,9 @@ export default class extends Base {
         }
         if (!think.isEmpty(keyword)) {
             where['title'] = ['like', keyword];
+        }
+        if(!think.isEmpty(vid)){
+            where['id'] = vid;
         }
         //是筛选分组还是视频，为空则全部
         if (!think.isEmpty(is_group)) {
@@ -146,9 +146,7 @@ export default class extends Base {
         let video = this.model('video.remote');
         let data = await
             video.showVideo(where, order, page, size);
-
         return this.success(data);
-
 
     }
 

@@ -36,7 +36,6 @@ export default class extends think.model.relation {
 
     async delVideo(id) {
 
-        console.log('id---' + id);
         let a = {
             id: id
         };
@@ -53,9 +52,7 @@ export default class extends think.model.relation {
     }
 
     showAllList(where, order, page, size){
-
-        console.log(where,order,page,size);
-
+ 
         return this.where(where).order(order).page(page, size).countSelect();
     }
 }
